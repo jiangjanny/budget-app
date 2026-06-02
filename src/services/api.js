@@ -1,4 +1,4 @@
-const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbyU8KjKOlWLndiqrGUd5-XdypHgyMSvL9ztijlE-17_FyUFum_8gUs5VYyg0fYMAgo/exec'
+const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbwSUi11YJdgaqU43rkPjDsku5B9xMejMWve1AS75vG6k0enlcUqXPD5gx6QSJ6oX9CW/exec'
 const DEFAULT_TOKEN = 'family2024'
 
 const getConfig = () => ({
@@ -6,14 +6,28 @@ const getConfig = () => ({
   token: localStorage.getItem('scriptToken') || DEFAULT_TOKEN
 })
 
+function jsonp(url) {
+  return new Promise((resolve, reject) => {
+    const cb = '_gs_' + Date.now() + '_' + Math.random().toString(36).slice(2)
+    const script = document.createElement('script')
+    const timer = setTimeout(() => { cleanup(); reject(new Error('請求逾時')) }, 15000)
+    function cleanup() {
+      clearTimeout(timer)
+      delete window[cb]
+      if (script.parentNode) script.parentNode.removeChild(script)
+    }
+    window[cb] = (data) => { cleanup(); resolve(data) }
+    script.onerror = () => { cleanup(); reject(new Error('網路錯誤')) }
+    script.src = url + '&callback=' + cb
+    document.head.appendChild(script)
+  })
+}
+
 async function call(action, params = {}) {
   const { url, token } = getConfig()
   if (!url) throw new Error('尚未設定 Apps Script URL')
-
   const query = new URLSearchParams({ action, token, ...params })
-  const res = await fetch(`${url}?${query}`)
-  if (!res.ok) throw new Error(`網路錯誤 ${res.status}`)
-  const json = await res.json()
+  const json = await jsonp(`${url}?${query}`)
   if (!json.ok) throw new Error(json.error || '請求失敗')
   return json.data
 }

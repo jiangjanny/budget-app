@@ -12,38 +12,45 @@ const SHEETS = {
 
 function doGet(e) {
   const p = e.parameter;
+  const cb = p.callback;
   if (!validateToken(p.token)) {
-    return respond({ error: '未授權' });
+    return respond({ error: '未授權' }, cb);
   }
   try {
     switch (p.action) {
-      case 'getSettings':      return respond(getSettings());
-      case 'updateSettings':   return respond(updateSettings(p));
-      case 'verifyAdmin':      return respond(verifyAdmin(p));
-      case 'getMembers':       return respond(getMembers());
-      case 'addMember':        return respond(addMember(p));
-      case 'updateMember':     return respond(updateMember(p));
-      case 'getPayments':      return respond(getPayments(p));
-      case 'addPayment':       return respond(addPayment(p));
-      case 'deletePayment':    return respond(deletePayment(p));
-      case 'getExpenses':      return respond(getExpenses(p));
-      case 'addExpense':       return respond(addExpense(p));
-      case 'deleteExpense':    return respond(deleteExpense(p));
-      case 'getDashboard':     return respond(getDashboard(p));
-      case 'getMemberStatus':  return respond(getMemberStatus(p));
-      case 'getAllDebt':        return respond(getAllDebt());
-      case 'getAnnualSummary': return respond(getAnnualSummary(p));
-      case 'sendNotification': return respond(sendNotification(p));
-      default: return respond({ error: '未知動作: ' + p.action });
+      case 'getSettings':      return respond(getSettings(), cb);
+      case 'updateSettings':   return respond(updateSettings(p), cb);
+      case 'verifyAdmin':      return respond(verifyAdmin(p), cb);
+      case 'getMembers':       return respond(getMembers(), cb);
+      case 'addMember':        return respond(addMember(p), cb);
+      case 'updateMember':     return respond(updateMember(p), cb);
+      case 'getPayments':      return respond(getPayments(p), cb);
+      case 'addPayment':       return respond(addPayment(p), cb);
+      case 'deletePayment':    return respond(deletePayment(p), cb);
+      case 'getExpenses':      return respond(getExpenses(p), cb);
+      case 'addExpense':       return respond(addExpense(p), cb);
+      case 'deleteExpense':    return respond(deleteExpense(p), cb);
+      case 'getDashboard':     return respond(getDashboard(p), cb);
+      case 'getMemberStatus':  return respond(getMemberStatus(p), cb);
+      case 'getAllDebt':        return respond(getAllDebt(), cb);
+      case 'getAnnualSummary': return respond(getAnnualSummary(p), cb);
+      case 'sendNotification': return respond(sendNotification(p), cb);
+      default: return respond({ error: '未知動作: ' + p.action }, cb);
     }
   } catch (err) {
-    return respond({ error: err.message });
+    return respond({ error: err.message }, cb);
   }
 }
 
-function respond(data) {
+function respond(data, callback) {
+  const json = JSON.stringify({ ok: true, data });
+  if (callback) {
+    return ContentService
+      .createTextOutput(callback + '(' + json + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
   return ContentService
-    .createTextOutput(JSON.stringify({ ok: true, data }))
+    .createTextOutput(json)
     .setMimeType(ContentService.MimeType.JSON);
 }
 
