@@ -38,7 +38,10 @@ onMounted(() => {
 })
 
 async function handleCredential(response) {
-  const payload = JSON.parse(atob(response.credential.split('.')[1]))
+  const base64 = response.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+  const payload = JSON.parse(decodeURIComponent(atob(base64).split('').map(c =>
+    '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+  ).join('')))
   googleUser.value = { email: payload.email, name: payload.name, picture: payload.picture }
 
   window.google.accounts.id.cancel()
