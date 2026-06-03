@@ -557,26 +557,47 @@ function importInitialData() {
   ];
   members.forEach(m => membersSheet.appendRow(m));
 
-  // 2. 重建 Payments sheet 並匯入歷史繳費
+  // 2. 重建 Payments sheet 並逐月匯入歷史繳費
   let paymentsSheet = ss.getSheetByName(SHEETS.PAYMENTS);
   if (paymentsSheet) ss.deleteSheet(paymentsSheet);
   paymentsSheet = ss.insertSheet(SHEETS.PAYMENTS);
   paymentsSheet.appendRow(['id', 'memberId', 'date', 'amount', 'note', 'createdAt']);
   paymentsSheet.setFrozenRows(1);
 
-  // 計算說明：
-  // 宜庭 / 宜靜：2014/01 ~ 2026/05 = 149個月 × 5,000 = 745,000
-  // 宜潔：       2016/06 ~ 2026/05 = 120個月 × 5,000 = 600,000
-  // 亞軒：       2025/06 ~ 2026/05 =  12個月 × 5,000 =  60,000
-  const payments = [
-    ['HP001', 'M001', '2026/05/31', 745000, '歷史繳費匯入 (2014/01~2026/05 共149個月)'],
-    ['HP002', 'M002', '2026/05/31', 745000, '歷史繳費匯入 (2014/01~2026/05 共149個月)'],
-    ['HP003', 'M003', '2026/05/31', 600000, '歷史繳費匯入 (2016/06~2026/05 共120個月)'],
-    ['HP004', 'M004', '2026/05/31',  60000, '歷史繳費匯入 (2025/06~2026/05 共12個月)']
+  // 逐月產生 5,000 繳費紀錄
+  function eachMonth(startYM, endYM) {
+    const result = [];
+    let [y, m] = startYM.split('/').map(Number);
+    const [ey, em] = endYM.split('/').map(Number);
+    while (y < ey || (y === ey && m <= em)) {
+      result.push(`${y}/${String(m).padStart(2, '0')}/10`);
+      m++; if (m > 12) { m = 1; y++; }
+    }
+    return result;
+  }
+
+  const paymentPlan = [
+    { memberId: 'M001', startYM: '2014/01', endYM: '2026/05' },
+    { memberId: 'M002', startYM: '2014/01', endYM: '2026/05' },
+    { memberId: 'M003', startYM: '2016/06', endYM: '2026/05' },
+    { memberId: 'M004', startYM: '2025/06', endYM: '2026/05' }
   ];
-  payments.forEach(p => paymentsSheet.appendRow([...p, new Date().toISOString()]));
-  // 將日期欄設為文字格式避免自動轉換
-  payments.forEach((_, i) => paymentsSheet.getRange(i + 2, 3).setNumberFormat('@'));
+
+  const createdAt = new Date().toISOString();
+  let rowIndex = 2;
+  paymentPlan.forEach(plan => {
+    const dates = eachMonth(plan.startYM, plan.endYM);
+    const rows = dates.map((date, i) => [
+      `HP_${plan.memberId}_${String(i + 1).padStart(3, '0')}`,
+      plan.memberId, date, 5000, '歷史繳費匯入', createdAt
+    ]);
+    if (rows.length > 0) {
+      paymentsSheet.getRange(rowIndex, 1, rows.length, 6).setValues(rows);
+      // 日期欄設為文字格式避免自動轉換
+      paymentsSheet.getRange(rowIndex, 3, rows.length, 1).setNumberFormat('@');
+      rowIndex += rows.length;
+    }
+  });
 
   // 3. 更新設定
   const settingsList = [
@@ -611,12 +632,12 @@ function importInitialData() {
 
   // 執行結果摘要
   Logger.log('========== 資料匯入完成 ==========');
-  Logger.log('成員    開始年月  義務結束  已繳金額  未繳金額');
-  Logger.log('宜庭    2014/01  2026/12  745,000   35,000 (7個月)');
-  Logger.log('宜靜    2014/01  2026/12  745,000   35,000 (7個月)');
-  Logger.log('宜潔    2016/06  2029/05  600,000  180,000 (36個月)');
-  Logger.log('亞軒    2025/06  2038/05   60,000  720,000 (144個月)');
+  Logger.log('成員    開始年月  義務結束  已繳月數  每月金額');
+  Logger.log('宜庭    2014/01  2026/12  149個月   5,000');
+  Logger.log('宜靜    2014/01  2026/12  149個月   5,000');
+  Logger.log('宜潔    2016/06  2029/05  120個月   5,000');
+  Logger.log('亞軒    2025/06  2038/05   12個月   5,000');
   Logger.log('==================================');
-  Logger.log('每月費用（義務期）：5,000 元');
+  Logger.log('每筆繳費紀錄為個別月份，繳費日期為當月10日');
   Logger.log('義務期滿後加照顧費：1,000（2026/12前）/ 2,000（2026/12後）');
 }

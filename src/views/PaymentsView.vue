@@ -11,6 +11,7 @@ const loading = ref(true)
 const error = ref('')
 const showForm = ref(false)
 const tab = ref('records')  // 'records' | 'status'
+const filterMemberId = ref('')
 
 // Form
 const form = ref({ memberId: '', date: today(), amount: '', note: '' })
@@ -23,18 +24,18 @@ function today() {
 
 const activeMembers = computed(() => store.members.filter(m => m.status === 'active'))
 
-const targetMemberId = computed(() =>
-  store.isAdmin ? '' : store.memberId
+const filteredPayments = computed(() =>
+  filterMemberId.value
+    ? payments.value.filter(p => p.memberId === filterMemberId.value)
+    : payments.value
 )
 
 async function load() {
   loading.value = true
   error.value = ''
   try {
-    const params = {}
-    if (!store.isAdmin) params.memberId = store.memberId
     const [pays, statuses] = await Promise.all([
-      api.getPayments(params),
+      api.getPayments({}),
       store.isAdmin
         ? api.getAllDebt()
         : api.getMemberStatus(store.memberId).then(s => [{ member: store.currentMember, ...s }])
@@ -144,12 +145,20 @@ onMounted(load)
 
     <!-- 繳費紀錄 Tab -->
     <template v-else>
-      <div v-if="payments.length === 0" class="empty">尚無繳費紀錄</div>
+      <!-- 篩選 -->
+      <div class="form-group" style="margin-bottom:8px">
+        <select v-model="filterMemberId" class="form-input">
+          <option value="">全部成員</option>
+          <option v-for="m in activeMembers" :key="m.id" :value="m.id">{{ m.name }}</option>
+        </select>
+      </div>
+
+      <div v-if="filteredPayments.length === 0" class="empty">尚無繳費紀錄</div>
       <div v-else class="card">
-        <div v-for="p in payments" :key="p.id" class="list-item">
+        <div v-for="p in filteredPayments" :key="p.id" class="list-item">
           <div>
-            <div class="list-main">{{ store.isAdmin ? memberName(p.memberId) : p.date }}</div>
-            <div class="list-sub">{{ store.isAdmin ? p.date : '' }} {{ p.note }}</div>
+            <div class="list-main" style="font-weight:700">{{ memberName(p.memberId) }}</div>
+            <div class="list-sub">{{ p.date }}{{ p.note ? '　' + p.note : '' }}</div>
           </div>
           <div style="display:flex;align-items:center;gap:10px">
             <span class="list-amount" style="color:#16a34a">NT$ {{ p.amount.toLocaleString() }}</span>
