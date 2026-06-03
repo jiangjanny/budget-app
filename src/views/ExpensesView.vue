@@ -13,6 +13,7 @@ const saving = ref(false)
 const formError = ref('')
 
 const CATEGORIES = ['醫療', '運動', '日用品', '交通', '修繕', '其他']
+const fmtD = (d) => d ? String(d).slice(2) : ''
 
 function today() {
   return new Date().toISOString().split('T')[0].replace(/-/g, '/')
@@ -73,7 +74,7 @@ onMounted(load)
       <div v-else class="card">
         <div v-for="e in expenses" :key="e.id" class="list-item">
           <div>
-            <div class="list-main">{{ e.date }}</div>
+            <div class="list-main">{{ fmtD(e.date) }}</div>
             <div class="list-sub">
               <span class="badge badge-gray" style="margin-right:4px">{{ e.category }}</span>
               {{ e.note }}

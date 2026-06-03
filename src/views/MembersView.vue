@@ -66,6 +66,7 @@ function remainingMonths(endYM) {
 function fmtAmount(n) {
   return `NT$ ${Number(n || 0).toLocaleString()}`
 }
+const fmtD = (d) => d ? String(d).slice(2) : ''
 
 onMounted(() => store.loadMembers())
 </script>
@@ -96,11 +97,11 @@ onMounted(() => store.loadMembers())
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
           <div v-if="m.memberStartYearMonth">
             <div style="color:#64748b">開始年月</div>
-            <div style="font-weight:600">{{ m.memberStartYearMonth }}</div>
+            <div style="font-weight:600">{{ fmtD(m.memberStartYearMonth) }}</div>
           </div>
           <div v-if="m.obligationEndYearMonth">
             <div style="color:#64748b">義務結束</div>
-            <div style="font-weight:600">{{ m.obligationEndYearMonth }}</div>
+            <div style="font-weight:600">{{ fmtD(m.obligationEndYearMonth) }}</div>
           </div>
           <div v-if="m.obligationEndYearMonth">
             <div style="color:#64748b">剩餘月數</div>

@@ -90,7 +90,8 @@ const pieOptions = {
   plugins: { legend: { position: 'right' } }
 }
 
-const fmt = (n) => `NT$ ${Number(n || 0).toLocaleString()}`
+const fmt  = (n) => `NT$ ${Number(n || 0).toLocaleString()}`
+const fmtD = (d) => d ? String(d).slice(2) : ''
 </script>
 
 <template>
@@ -130,7 +131,7 @@ const fmt = (n) => `NT$ ${Number(n || 0).toLocaleString()}`
             }" />
           </div>
           <div v-if="d.debtMonths?.length" style="margin-top:4px;font-size:12px;color:#dc2626">
-            ⚠️ 欠費月份：{{ d.debtMonths.map(m => m.yearMonth).join('、') }}
+            ⚠️ 欠費月份：{{ d.debtMonths.map(m => fmtD(m.yearMonth)).join('、') }}
           </div>
         </div>
       </div>
@@ -162,7 +163,7 @@ const fmt = (n) => `NT$ ${Number(n || 0).toLocaleString()}`
       <div class="card">
         <div class="section-title" style="margin-bottom:12px">月度明細</div>
         <div v-for="m in summary.months" :key="m.yearMonth" class="list-item">
-          <span style="font-weight:600">{{ m.yearMonth }}</span>
+          <span style="font-weight:600">{{ fmtD(m.yearMonth) }}</span>
           <div style="display:flex;gap:12px;font-size:13px">
             <span style="color:#16a34a">+{{ m.income.toLocaleString() }}</span>
             <span style="color:#dc2626">-{{ m.expense.toLocaleString() }}</span>

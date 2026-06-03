@@ -84,6 +84,7 @@ async function deleteRecord(id) {
 function memberName(id) {
   return store.members.find(m => m.id === id)?.name || id
 }
+const fmtD = (d) => d ? String(d).slice(2) : ''
 
 onMounted(load)
 </script>
@@ -123,7 +124,7 @@ onMounted(load)
           <div style="margin-bottom:8px;font-size:13px;font-weight:700;color:#dc2626">⚠️ 欠費明細</div>
           <div v-for="dm in s.debtMonths" :key="dm.yearMonth"
             style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid #fee2e2">
-            <span>{{ dm.yearMonth }}</span>
+            <span>{{ fmtD(dm.yearMonth) }}</span>
             <span style="color:#dc2626;font-weight:600">欠 NT$ {{ dm.owed.toLocaleString() }}</span>
           </div>
         </template>
@@ -158,7 +159,7 @@ onMounted(load)
         <div v-for="p in filteredPayments" :key="p.id" class="list-item">
           <div>
             <div class="list-main" style="font-weight:700">{{ memberName(p.memberId) }}</div>
-            <div class="list-sub">{{ p.date }}{{ p.note ? '　' + p.note : '' }}</div>
+            <div class="list-sub">{{ fmtD(p.date) }}{{ p.note ? '　' + p.note : '' }}</div>
           </div>
           <div style="display:flex;align-items:center;gap:10px">
             <span class="list-amount" style="color:#16a34a">NT$ {{ p.amount.toLocaleString() }}</span>

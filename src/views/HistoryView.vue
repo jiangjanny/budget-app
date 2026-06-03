@@ -47,6 +47,7 @@ async function load() {
 function memberName(id) {
   return store.members.find(m => m.id === id)?.name || id
 }
+const fmtD = (d) => d ? String(d).slice(2) : ''
 
 function exportCSV() {
   const data = tab.value === 'payments'
@@ -111,8 +112,8 @@ onMounted(load)
         </div>
         <div v-for="p in payments" :key="p.id" class="list-item">
           <div>
-            <div class="list-main">{{ store.isAdmin ? memberName(p.memberId) : p.date }}</div>
-            <div class="list-sub">{{ store.isAdmin ? p.date : '' }} {{ p.note }}</div>
+            <div class="list-main">{{ store.isAdmin ? memberName(p.memberId) : fmtD(p.date) }}</div>
+            <div class="list-sub">{{ store.isAdmin ? fmtD(p.date) : '' }} {{ p.note }}</div>
           </div>
           <span class="list-amount" style="color:#16a34a">NT$ {{ p.amount.toLocaleString() }}</span>
         </div>
@@ -128,7 +129,7 @@ onMounted(load)
         </div>
         <div v-for="e in expenses" :key="e.id" class="list-item">
           <div>
-            <div class="list-main">{{ e.date }}</div>
+            <div class="list-main">{{ fmtD(e.date) }}</div>
             <div class="list-sub"><span class="badge badge-gray">{{ e.category }}</span> {{ e.note }}</div>
           </div>
           <span class="list-amount" style="color:#dc2626">NT$ {{ e.amount.toLocaleString() }}</span>
