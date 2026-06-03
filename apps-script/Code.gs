@@ -133,7 +133,7 @@ function updateSettings(p) {
 }
 
 // ---- 成員 ----
-// 欄位：id | name | nickname | status | notes | memberStartYearMonth | obligationEndYearMonth | createdAt
+// 欄位：id | name | nickname | status | notes | memberStartYearMonth | obligationEndYearMonth | createdAt | email
 
 function getMembers() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -150,7 +150,8 @@ function getMembers() {
       notes: String(row[4] || ''),
       memberStartYearMonth: String(row[5] || ''),
       obligationEndYearMonth: String(row[6] || ''),
-      createdAt: String(row[7] || '')
+      createdAt: String(row[7] || ''),
+      email: String(row[8] || '')
     }))
     .filter(m => m.id);
 }
@@ -164,14 +165,14 @@ function addMember(p) {
   let sheet = ss.getSheetByName(SHEETS.MEMBERS);
   if (!sheet) {
     sheet = ss.insertSheet(SHEETS.MEMBERS);
-    sheet.appendRow(['id', 'name', 'nickname', 'status', 'notes', 'memberStartYearMonth', 'obligationEndYearMonth', 'createdAt']);
+    sheet.appendRow(['id', 'name', 'nickname', 'status', 'notes', 'memberStartYearMonth', 'obligationEndYearMonth', 'createdAt', 'email']);
     sheet.setFrozenRows(1);
   }
   const id = 'M' + Date.now();
   sheet.appendRow([
     id, p.name, p.nickname || '', p.status || 'active', p.notes || '',
     p.memberStartYearMonth || '', p.obligationEndYearMonth || '',
-    new Date().toISOString()
+    new Date().toISOString(), p.email || ''
   ]);
   return { id };
 }
@@ -183,12 +184,13 @@ function updateMember(p) {
   const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][0]) === String(p.id)) {
-      if (p.name !== undefined)                  sheet.getRange(i+1, 2).setValue(p.name);
-      if (p.nickname !== undefined)              sheet.getRange(i+1, 3).setValue(p.nickname);
-      if (p.status !== undefined)                sheet.getRange(i+1, 4).setValue(p.status);
-      if (p.notes !== undefined)                 sheet.getRange(i+1, 5).setValue(p.notes);
-      if (p.memberStartYearMonth !== undefined)  sheet.getRange(i+1, 6).setValue(p.memberStartYearMonth);
+      if (p.name !== undefined)                   sheet.getRange(i+1, 2).setValue(p.name);
+      if (p.nickname !== undefined)               sheet.getRange(i+1, 3).setValue(p.nickname);
+      if (p.status !== undefined)                 sheet.getRange(i+1, 4).setValue(p.status);
+      if (p.notes !== undefined)                  sheet.getRange(i+1, 5).setValue(p.notes);
+      if (p.memberStartYearMonth !== undefined)   sheet.getRange(i+1, 6).setValue(p.memberStartYearMonth);
       if (p.obligationEndYearMonth !== undefined) sheet.getRange(i+1, 7).setValue(p.obligationEndYearMonth);
+      if (p.email !== undefined)                  sheet.getRange(i+1, 9).setValue(p.email);
       return { success: true };
     }
   }
@@ -521,7 +523,7 @@ function initSpreadsheet() {
     return sheet;
   }
   ensureSheet(SHEETS.SETTINGS, ['key', 'value']);
-  ensureSheet(SHEETS.MEMBERS, ['id', 'name', 'nickname', 'status', 'notes', 'memberStartYearMonth', 'obligationEndYearMonth', 'createdAt']);
+  ensureSheet(SHEETS.MEMBERS, ['id', 'name', 'nickname', 'status', 'notes', 'memberStartYearMonth', 'obligationEndYearMonth', 'createdAt', 'email']);
   ensureSheet(SHEETS.PAYMENTS, ['id', 'memberId', 'date', 'amount', 'note', 'createdAt']);
   ensureSheet(SHEETS.EXPENSES, ['id', 'date', 'category', 'amount', 'note', 'createdAt']);
   const settingsSheet = ss.getSheetByName(SHEETS.SETTINGS);
@@ -542,17 +544,18 @@ function importInitialData() {
   let membersSheet = ss.getSheetByName(SHEETS.MEMBERS);
   if (membersSheet) ss.deleteSheet(membersSheet);
   membersSheet = ss.insertSheet(SHEETS.MEMBERS);
-  membersSheet.appendRow(['id', 'name', 'nickname', 'status', 'notes', 'memberStartYearMonth', 'obligationEndYearMonth', 'createdAt']);
+  membersSheet.appendRow(['id', 'name', 'nickname', 'status', 'notes', 'memberStartYearMonth', 'obligationEndYearMonth', 'createdAt', 'email']);
   membersSheet.setFrozenRows(1);
 
+  const now = new Date().toISOString();
   const members = [
-    // id, name, nickname, status, notes, startYM, endYM
-    ['M001', '宜庭', '', 'active', '', '2014/01', '2026/12'],
-    ['M002', '宜靜', '', 'active', '', '2014/01', '2026/12'],
-    ['M003', '宜潔', '', 'active', '', '2016/06', '2029/05'],
-    ['M004', '亞軒', '', 'active', '管理者', '2025/06', '2038/05']
+    // id, name, nickname, status, notes, startYM, endYM, createdAt, email
+    ['M001', '宜庭', '', 'active', '', '2014/01', '2026/12', now, ''],
+    ['M002', '宜靜', '', 'active', '', '2014/01', '2026/12', now, ''],
+    ['M003', '宜潔', '', 'active', '', '2016/06', '2029/05', now, 'yuaog1331@gmail.com'],
+    ['M004', '亞軒', '', 'active', '管理者', '2025/06', '2038/05', now, '']
   ];
-  members.forEach(m => membersSheet.appendRow([...m, new Date().toISOString()]));
+  members.forEach(m => membersSheet.appendRow(m));
 
   // 2. 重建 Payments sheet 並匯入歷史繳費
   let paymentsSheet = ss.getSheetByName(SHEETS.PAYMENTS);

@@ -7,13 +7,13 @@ const store = useAppStore()
 
 const showForm = ref(false)
 const editTarget = ref(null)
-const form = ref({ name: '', nickname: '', status: 'active', notes: '', memberStartYearMonth: '', obligationEndYearMonth: '' })
+const form = ref({ name: '', nickname: '', email: '', status: 'active', notes: '', memberStartYearMonth: '', obligationEndYearMonth: '' })
 const saving = ref(false)
 const formError = ref('')
 
 function openAdd() {
   editTarget.value = null
-  form.value = { name: '', nickname: '', status: 'active', notes: '', memberStartYearMonth: '', obligationEndYearMonth: '' }
+  form.value = { name: '', nickname: '', email: '', status: 'active', notes: '', memberStartYearMonth: '', obligationEndYearMonth: '' }
   formError.value = ''
   showForm.value = true
 }
@@ -23,6 +23,7 @@ function openEdit(member) {
   form.value = {
     name: member.name,
     nickname: member.nickname,
+    email: member.email || '',
     status: member.status,
     notes: member.notes,
     memberStartYearMonth: member.memberStartYearMonth || '',
@@ -133,6 +134,10 @@ onMounted(() => store.loadMembers())
         <div class="form-group">
           <label class="form-label">暱稱</label>
           <input v-model="form.nickname" class="form-input" placeholder="選填" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Google 信箱（登入用）</label>
+          <input v-model="form.email" class="form-input" placeholder="example@gmail.com" type="email" />
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div class="form-group">

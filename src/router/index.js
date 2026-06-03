@@ -21,6 +21,7 @@ router.beforeEach((to) => {
   const role = localStorage.getItem('role')
 
   if (to.path === '/setup') return '/login'
+  if (role && to.meta.public) return '/'
   if (!role && !to.meta.public) return '/login'
   if (to.meta.adminOnly && role !== 'admin') return '/'
 })

@@ -6,11 +6,8 @@ import { api } from '../services/api'
 
 const GOOGLE_CLIENT_ID = '150598598156-tirvcdctbh2itjjn47efnhrkkblplq4l.apps.googleusercontent.com'
 
-// Google email → 角色對應
-const EMAIL_MAP = {
-  'kitty46978@gmail.com': { role: 'admin' },
-  'yuaog1331@gmail.com':  { role: 'member', memberId: 'M003' }  // 宜潔
-}
+// 管理者信箱（寫死，不存在 Sheets）
+const ADMIN_EMAIL = 'kitty46978@gmail.com'
 
 const store = useAppStore()
 const router = useRouter()
@@ -40,23 +37,28 @@ onMounted(() => {
   else document.querySelector('script[src*="gsi"]').addEventListener('load', init)
 })
 
-function handleCredential(response) {
+async function handleCredential(response) {
   const payload = JSON.parse(atob(response.credential.split('.')[1]))
   googleUser.value = { email: payload.email, name: payload.name, picture: payload.picture }
 
-  const mapped = EMAIL_MAP[payload.email]
-  if (mapped?.role === 'admin') {
+  window.google.accounts.id.cancel()
+
+  if (payload.email === ADMIN_EMAIL) {
     store.setRole('admin')
-    router.push('/')
-    return
-  }
-  if (mapped?.role === 'member') {
-    store.setRole('member', mapped.memberId)
-    router.push('/')
+    await router.push('/')
     return
   }
 
-  // 未設定的 email → 顯示成員選單
+  // 從 Sheets 成員資料查 email
+  if (!store.members.length) await store.loadMembers()
+  const member = store.members.find(m => m.email === payload.email)
+  if (member) {
+    store.setRole('member', member.id)
+    await router.push('/')
+    return
+  }
+
+  // 找不到對應成員 → 顯示成員選單
   mode.value = 'member'
 }
 
