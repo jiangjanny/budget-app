@@ -87,7 +87,12 @@ function getSettingsObj() {
   if (!sheet) return getDefaultSettings();
   const data = sheet.getDataRange().getValues();
   const obj = {};
-  data.forEach(row => { if (row[0]) obj[String(row[0])] = row[1]; });
+  const ymKeys = ['careDeadlineYearMonth', 'systemStartYearMonth'];
+  data.forEach(row => {
+    if (!row[0]) return;
+    const key = String(row[0]);
+    obj[key] = ymKeys.includes(key) ? fmtYM(row[1]) : row[1];
+  });
   return Object.assign(getDefaultSettings(), obj);
 }
 
@@ -148,8 +153,8 @@ function getMembers() {
       nickname: String(row[2] || ''),
       status: String(row[3] || 'active'),
       notes: String(row[4] || ''),
-      memberStartYearMonth: String(row[5] || ''),
-      obligationEndYearMonth: String(row[6] || ''),
+      memberStartYearMonth: fmtYM(row[5]),
+      obligationEndYearMonth: fmtYM(row[6]),
       createdAt: String(row[7] || ''),
       email: String(row[8] || '')
     }))
@@ -226,6 +231,11 @@ function getMemberMonthlyFee(member, yearMonth, settings) {
 
 function fmtDate(val) {
   if (val instanceof Date) return Utilities.formatDate(val, 'Asia/Taipei', 'yyyy/MM/dd');
+  return String(val || '');
+}
+
+function fmtYM(val) {
+  if (val instanceof Date) return Utilities.formatDate(val, 'Asia/Taipei', 'yyyy/MM');
   return String(val || '');
 }
 
@@ -397,8 +407,18 @@ function getMemberStatus(p) {
 function getAllDebt() {
   const members = getMembers().filter(m => m.status === 'active');
   return members.map(member => {
-    const status = getMemberStatus({ memberId: member.id });
-    return { member, ...status };
+    const s = getMemberStatus({ memberId: member.id });
+    if (s.error) return { member, error: s.error, paidCount: 0, prepaidCount: 0, debtMonths: [], remainingBalance: 0, totalPaid: 0 };
+    return {
+      member,
+      totalPaid: s.totalPaid,
+      paidCount: s.paidMonths.length,
+      prepaidCount: s.prepaidCount,
+      debtMonths: s.debtMonths,
+      remainingBalance: s.remainingBalance,
+      obligationEndYearMonth: s.obligationEndYearMonth,
+      memberStartYearMonth: s.memberStartYearMonth
+    };
   });
 }
 

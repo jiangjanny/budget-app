@@ -122,15 +122,15 @@ const fmtD = (d) => d ? String(d).slice(2) : ''
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
             <span style="font-weight:700;font-size:15px">{{ d.member?.name }}</span>
             <span style="font-size:13px;color:#64748b">
-              已繳 {{ d.paidMonths?.length || 0 }} 月 ／
+              已繳 {{ d.paidCount || 0 }} 月 ／
               欠 {{ d.debtMonths?.length || 0 }} 月
               <span v-if="d.prepaidCount > 0" style="color:#2563eb">　預繳 {{ d.prepaidCount }} 月</span>
             </span>
           </div>
           <div style="background:#f1f5f9;border-radius:99px;height:10px;overflow:hidden">
             <div :style="{
-              width: (d.paidMonths?.length || 0) + (d.debtMonths?.length || 0) > 0
-                ? (((d.paidMonths?.length || 0) / ((d.paidMonths?.length || 0) + (d.debtMonths?.length || 0))) * 100).toFixed(1) + '%'
+              width: (d.paidCount || 0) + (d.debtMonths?.length || 0) > 0
+                ? (((d.paidCount || 0) / ((d.paidCount || 0) + (d.debtMonths?.length || 0))) * 100).toFixed(1) + '%'
                 : '0%',
               background: d.debtMonths?.length ? '#f59e0b' : '#16a34a',
               height: '100%',
