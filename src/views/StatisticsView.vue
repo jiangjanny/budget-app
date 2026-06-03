@@ -12,6 +12,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement,
 
 const year = ref(new Date().getFullYear().toString())
 const summary = ref(null)
+const allDebts = ref([])
 const loading = ref(true)
 const error = ref('')
 
@@ -21,7 +22,12 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    summary.value = await api.getAnnualSummary(year.value)
+    const [s, d] = await Promise.all([
+      api.getAnnualSummary(year.value),
+      api.getAllDebt()
+    ])
+    summary.value = s
+    allDebts.value = d
   } catch (e) {
     error.value = e.message
   } finally {
@@ -99,6 +105,35 @@ const fmt = (n) => `NT$ ${Number(n || 0).toLocaleString()}`
     <div v-if="loading" class="spinner" />
     <div v-else-if="error" class="alert alert-error">{{ error }}</div>
     <template v-else-if="summary">
+
+      <!-- 每人繳費進度 -->
+      <div class="card">
+        <div class="section-title" style="margin-bottom:12px">👤 每人 5,000/月 繳費進度</div>
+        <div v-for="d in allDebts" :key="d.member?.id" style="margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+            <span style="font-weight:700;font-size:15px">{{ d.member?.name }}</span>
+            <span style="font-size:13px;color:#64748b">
+              已繳 {{ d.paidMonths?.length || 0 }} 月 ／
+              欠 {{ d.debtMonths?.length || 0 }} 月
+              <span v-if="d.prepaidCount > 0" style="color:#2563eb">　預繳 {{ d.prepaidCount }} 月</span>
+            </span>
+          </div>
+          <div style="background:#f1f5f9;border-radius:99px;height:10px;overflow:hidden">
+            <div :style="{
+              width: (d.paidMonths?.length || 0) + (d.debtMonths?.length || 0) > 0
+                ? (((d.paidMonths?.length || 0) / ((d.paidMonths?.length || 0) + (d.debtMonths?.length || 0))) * 100).toFixed(1) + '%'
+                : '0%',
+              background: d.debtMonths?.length ? '#f59e0b' : '#16a34a',
+              height: '100%',
+              borderRadius: '99px',
+              transition: 'width .3s'
+            }" />
+          </div>
+          <div v-if="d.debtMonths?.length" style="margin-top:4px;font-size:12px;color:#dc2626">
+            ⚠️ 欠費月份：{{ d.debtMonths.map(m => m.yearMonth).join('、') }}
+          </div>
+        </div>
+      </div>
 
       <!-- 年度總計 -->
       <div class="card-grid-3">

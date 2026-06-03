@@ -17,6 +17,28 @@ const currentYM = `${today.getFullYear()}/${String(today.getMonth()+1).padStart(
 
 const fmt = (n) => `NT$ ${Number(n || 0).toLocaleString()}`
 
+function nextYM(ym) {
+  let [y, m] = ym.split('/').map(Number)
+  m++; if (m > 12) { m = 1; y++ }
+  return `${y}/${String(m).padStart(2, '0')}`
+}
+
+const careSchedule = computed(() => {
+  const s = store.settings
+  const careDeadline = s.careDeadlineYearMonth || '2026/12'
+  const feeBefore = Number(s.baseCareFeeAfter || s.baseCareFeeBefore || 1000)
+  const feeAfter  = Number(s.baseCareFeeAfter || 2000)
+  return store.members
+    .filter(m => m.status === 'active' && m.obligationEndYearMonth)
+    .map(m => {
+      const careStart = nextYM(m.obligationEndYearMonth)
+      const startFee  = careStart > careDeadline ? feeAfter : feeBefore
+      const upgradeAt = startFee < feeAfter ? nextYM(careDeadline) : null
+      return { name: m.name, obligationEnd: m.obligationEndYearMonth, careStart, startFee, upgradeAt, feeAfter }
+    })
+    .sort((a, b) => a.careStart.localeCompare(b.careStart))
+})
+
 async function load() {
   loading.value = true
   error.value = ''
@@ -116,6 +138,22 @@ onMounted(load)
       </template>
 
     </template>
+
+    <!-- 照顧費時程 -->
+    <div v-if="careSchedule.length" class="card" style="margin-top:8px">
+      <div class="section-title" style="margin-bottom:12px">🏥 照顧費時程</div>
+      <div v-for="c in careSchedule" :key="c.name"
+        style="padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:14px">
+        <div style="font-weight:700;margin-bottom:4px">{{ c.name }}</div>
+        <div style="color:#64748b;font-size:13px">義務到期：{{ c.obligationEnd }}</div>
+        <div style="margin-top:4px">
+          <span class="badge badge-blue">{{ c.careStart }} 起繳照顧費 NT$ {{ c.startFee.toLocaleString() }}/月</span>
+        </div>
+        <div v-if="c.upgradeAt" style="margin-top:4px;color:#d97706;font-size:13px">
+          ↗ {{ c.upgradeAt }} 起升為 NT$ {{ c.feeAfter.toLocaleString() }}/月
+        </div>
+      </div>
+    </div>
 
     <!-- 快速功能（管理者） -->
     <template v-if="store.isAdmin">
