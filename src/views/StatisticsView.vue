@@ -14,24 +14,29 @@ const year = ref(new Date().getFullYear().toString())
 const summary = ref(null)
 const allDebts = ref([])
 const loading = ref(true)
+const debtsLoading = ref(true)
 const error = ref('')
 
 const years = Array.from({ length: 3 }, (_, i) => String(new Date().getFullYear() - i))
 
 async function load() {
   loading.value = true
+  debtsLoading.value = true
   error.value = ''
   try {
-    const [s, d] = await Promise.all([
-      api.getAnnualSummary(year.value),
-      api.getAllDebt()
-    ])
-    summary.value = s
-    allDebts.value = d
+    summary.value = await api.getAnnualSummary(year.value)
   } catch (e) {
     error.value = e.message
   } finally {
     loading.value = false
+  }
+  // 成員進度非同步載入，不卡住年度統計
+  try {
+    allDebts.value = await api.getAllDebt()
+  } catch (e) {
+    // 靜默失敗，進度區塊顯示空
+  } finally {
+    debtsLoading.value = false
   }
 }
 
@@ -110,6 +115,9 @@ const fmtD = (d) => d ? String(d).slice(2) : ''
       <!-- 每人繳費進度 -->
       <div class="card">
         <div class="section-title" style="margin-bottom:12px">👤 每人 5,000/月 繳費進度</div>
+        <div v-if="debtsLoading" style="text-align:center;padding:16px;color:#94a3b8;font-size:14px">
+          計算中...
+        </div>
         <div v-for="d in allDebts" :key="d.member?.id" style="margin-bottom:16px">
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
             <span style="font-weight:700;font-size:15px">{{ d.member?.name }}</span>
